@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>温泉ロッカー管理</title>
+
+<style>
+
+body{
+font-family:sans-serif;
+margin:0;
+background:#f2f2f2;
+text-align:center;
+}
+
+header{
+background:#333;
+color:white;
+padding:12px;
+font-size:20px;
+}
+
+.counter{
+font-size:16px;
+padding:10px;
+background:white;
+}
+
+.switch{
+display:flex;
+justify-content:center;
+gap:10px;
+padding:10px;
+}
+
+.switch button{
+font-size:18px;
+padding:12px 20px;
+border:none;
+border-radius:8px;
+}
+
+.active{
+background:#4CAF50;
+color:white;
+}
+
+.block{
+margin:20px 10px;
+}
+
+.row{
+display:flex;
+justify-content:center;
+}
+
+.locker{
+width:72px;
+height:72px;
+margin:4px;
+border-radius:10px;
+border:2px solid #333;
+background:white;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+font-size:18px;
+}
+
+.used{
+background:#ff8a8a;
+}
+
+.near{
+border:4px solid orange;
+}
+
+.time{
+font-size:11px;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>温泉ロッカー管理</header>
+
+<div class="counter">
+女性利用人数 <span id="femaleCount">0</span> / 36　
+男性利用人数 <span id="maleCount">0</span> / 32
+</div>
+
+<div class="switch">
+<button id="femaleBtn">女性</button>
+<button id="maleBtn">男性</button>
+</div>
+
+<div id="app"></div>
+
+<script>
+
+const layout={
+
+female:[
+{
+top:[20,19,18,17,16,15,14,13,12,11],
+bottom:[10,9,8,7,6,5,4,3,2,1]
+},
+{
+top:[36,35,34,33,32,31,30,29],
+bottom:[28,27,26,25,24,23,22,21]
+}
+],
+
+male:[
+{
+top:[61,62,63,64,65,66],
+bottom:[51,52,53,54,55,56]
+},
+{
+top:[67,68,69,70],
+bottom:[57,58,59,60]
+},
+{
+top:[77,78,79,80,81,82],
+bottom:[71,72,73,74,75,76]
+}
+]
+
+}
+
+let mode="female"
+
+let state=JSON.parse(localStorage.getItem("lockerState")||"{}")
+
+function save(){
+localStorage.setItem("lockerState",JSON.stringify(state))
+}
+
+function switchMode(m){
+
+mode=m
+
+document.getElementById("femaleBtn").classList.remove("active")
+document.getElementById("maleBtn").classList.remove("active")
+
+if(m==="female"){
+document.getElementById("femaleBtn").classList.add("active")
+}else{
+document.getElementById("maleBtn").classList.add("active")
+}
+
+draw()
+
+}
+
+document.getElementById("femaleBtn").onclick=()=>switchMode("female")
+document.getElementById("maleBtn").onclick=()=>switchMode("male")
+
+function draw(){
+
+const app=document.getElementById("app")
+app.innerHTML=""
+
+layout[mode].forEach(block=>{
+
+const blockDiv=document.createElement("div")
+blockDiv.className="block"
+
+const top=document.createElement("div")
+top.className="row"
+
+block.top.forEach(n=>{
+top.appendChild(createLocker(n))
+})
+
+const bottom=document.createElement("div")
+bottom.className="row"
+
+block.bottom.forEach(n=>{
+bottom.appendChild(createLocker(n))
+})
+
+blockDiv.appendChild(top)
+blockDiv.appendChild(bottom)
+
+app.appendChild(blockDiv)
+
+})
+
+updateAll()
+
+}
+
+function createLocker(num){
+
+const div=document.createElement("div")
+div.className="locker"
+div.id="locker"+num
+
+const label=document.createElement("div")
+label.innerText=num
+
+const time=document.createElement("div")
+time.className="time"
+
+div.appendChild(label)
+div.appendChild(time)
+
+div.onclick=()=>toggle(num)
+
+return div
+
+}
+
+function toggle(num){
+
+if(state[num]){
+delete state[num]
+}else{
+state[num]=Date.now()
+}
+
+save()
+updateAll()
+
+}
+
+function updateAll(){
+
+document.querySelectorAll(".locker").forEach(el=>{
+
+const num=el.id.replace("locker","")
+
+el.classList.remove("used")
+el.classList.remove("near")
+
+const timeDiv=el.querySelector(".time")
+
+if(state[num]){
+
+el.classList.add("used")
+
+let minutes=Math.floor((Date.now()-state[num])/60000)
+
+timeDiv.innerText=minutes+"分"
+
+}else{
+
+timeDiv.innerText=""
+
+}
+
+})
+
+updateNear()
+updateCounters()
+
+}
+
+function updateNear(){
+
+layout[mode].forEach(block=>{
+
+let rows=[block.top,block.bottom]
+
+rows.forEach(row=>{
+
+row.forEach((num,i)=>{
+
+if(state[num]){
+
+let left=row[i-1]
+let right=row[i+1]
+
+if(left && !state[left]){
+document.getElementById("locker"+left)?.classList.add("near")
+}
+
+if(right && !state[right]){
+document.getElementById("locker"+right)?.classList.add("near")
+}
+
+}
+
+})
+
+})
+
+})
+
+}
+
+function updateCounters(){
+
+let femaleNumbers=[]
+let maleNumbers=[]
+
+layout.female.forEach(b=>{
+femaleNumbers=femaleNumbers.concat(b.top,b.bottom)
+})
+
+layout.male.forEach(b=>{
+maleNumbers=maleNumbers.concat(b.top,b.bottom)
+})
+
+let femaleUsed=0
+let maleUsed=0
+
+femaleNumbers.forEach(n=>{
+if(state[n]) femaleUsed++
+})
+
+maleNumbers.forEach(n=>{
+if(state[n]) maleUsed++
+})
+
+document.getElementById("femaleCount").innerText=femaleUsed
+document.getElementById("maleCount").innerText=maleUsed
+
+}
+
+function loop(){
+updateAll()
+setTimeout(loop,30000)
+}
+
+switchMode("female")
+loop()
+
+</script>
+
+</body>
+</html>
