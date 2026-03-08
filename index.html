@@ -96,6 +96,12 @@ font-size:11px;
 女性 <span id="femaleVisitors">0</span>　
 男性 <span id="maleVisitors">0</span>
 </div>
+  
+<div style="margin:10px;">
+<button id="resetBtn" style="font-size:16px;padding:10px 20px;border:none;border-radius:8px;background:#444;color:white;">
+閉店リセット
+</button>
+</div>
 
 <div class="switch">
 <button id="femaleBtn">女性</button>
@@ -351,8 +357,27 @@ setTimeout(loop,30000)
 switchMode("female")
 loop()
 
+document.getElementById("resetBtn").onclick=function(){
+
+if(confirm("本日のデータをすべてリセットしますか？")){
+
+state={}
+femaleVisitors=0
+maleVisitors=0
+
+localStorage.removeItem("lockerState")
+localStorage.setItem("femaleVisitors",0)
+localStorage.setItem("maleVisitors",0)
+
+draw()
+
+}
+
+}
+
 </script>
 
 </body>
 </html>
+
 
