@@ -91,6 +91,10 @@ font-size:11px;
 <div class="counter">
 女性利用人数 <span id="femaleCount">0</span> / 36　
 男性利用人数 <span id="maleCount">0</span> / 32
+<br>
+本日の来客数　
+女性 <span id="femaleVisitors">0</span>　
+男性 <span id="maleVisitors">0</span>
 </div>
 
 <div class="switch">
@@ -135,6 +139,8 @@ bottom:[71,72,73,74,75,76]
 let mode="female"
 
 let state=JSON.parse(localStorage.getItem("lockerState")||"{}")
+let femaleVisitors = Number(localStorage.getItem("femaleVisitors") || 0)
+let maleVisitors = Number(localStorage.getItem("maleVisitors") || 0)
 
 function save(){
 localStorage.setItem("lockerState",JSON.stringify(state))
@@ -219,9 +225,21 @@ return div
 function toggle(num){
 
 if(state[num]){
+
 delete state[num]
+
 }else{
+
 state[num]=Date.now()
+
+if(mode==="female"){
+femaleVisitors++
+localStorage.setItem("femaleVisitors",femaleVisitors)
+}else{
+maleVisitors++
+localStorage.setItem("maleVisitors",maleVisitors)
+}
+
 }
 
 save()
@@ -320,6 +338,8 @@ if(state[n]) maleUsed++
 
 document.getElementById("femaleCount").innerText=femaleUsed
 document.getElementById("maleCount").innerText=maleUsed
+document.getElementById("femaleVisitors").innerText=femaleVisitors
+document.getElementById("maleVisitors").innerText=maleVisitors
 
 }
 
@@ -335,3 +355,4 @@ loop()
 
 </body>
 </html>
+
