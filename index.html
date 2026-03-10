@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -285,7 +286,7 @@ delete state[num]
 }else{
 state[num]=Date.now()
 
-if(mode==="female") femaleTotal++
+if(num<=36) femaleTotal++
 else maleTotal++
 }
 
@@ -339,9 +340,15 @@ function updateAll(){
 let femaleNow=0
 let maleNow=0
 
+Object.keys(state).forEach(num=>{
+num=parseInt(num)
+if(num<=36) femaleNow++
+else maleNow++
+})
+
 document.querySelectorAll(".locker").forEach(el=>{
 
-const num=el.id.replace("locker","")
+const num=parseInt(el.id.replace("locker",""))
 
 el.classList.remove("used")
 el.classList.remove("near")
@@ -355,9 +362,6 @@ el.classList.add("used")
 let minutes=Math.floor((Date.now()-state[num])/60000)
 
 timeDiv.innerText=minutes+"分"
-
-if(num<=36) femaleNow++
-else maleNow++
 
 updateColor(el,minutes)
 
@@ -380,9 +384,7 @@ document.getElementById("maleTotal").innerText=maleTotal
 
 document.getElementById("privateNow").innerText=privateNow
 
-let totalNow=femaleNow+maleNow+privateNow
-
-document.getElementById("totalNow").innerText=totalNow
+document.getElementById("totalNow").innerText=femaleNow+maleNow+privateNow
 
 updateStatus(femaleNow,maleNow)
 
@@ -463,3 +465,4 @@ loop()
 
 </body>
 </html>
+```
