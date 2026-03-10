@@ -21,6 +21,14 @@ padding:14px;
 font-size:22px;
 }
 
+#statusBar{
+font-size:26px;
+font-weight:bold;
+color:red;
+margin:6px;
+height:32px;
+}
+
 .counter{
 font-size:18px;
 padding:12px;
@@ -87,7 +95,7 @@ font-size:20px;
 }
 
 .male .locker{
-height:86px;
+height:90px;
 }
 
 .used{
@@ -108,6 +116,8 @@ font-size:15px;
 <body>
 
 <header>温泉ロッカー管理</header>
+
+<div id="statusBar"></div>
 
 <div class="counter">
 
@@ -249,7 +259,25 @@ time.className="time"
 div.appendChild(label)
 div.appendChild(time)
 
-div.onclick=()=>toggle(num)
+let pressTimer
+
+div.addEventListener("touchstart",function(){
+
+pressTimer=setTimeout(()=>{
+removeLocker(num)
+},800)
+
+})
+
+div.addEventListener("touchend",function(){
+
+clearTimeout(pressTimer)
+
+if(!state[num]){
+toggle(num)
+}
+
+})
 
 return div
 
@@ -257,19 +285,23 @@ return div
 
 function toggle(num){
 
-if(state[num]){
-delete state[num]
-}else{
-
 state[num]=Date.now()
 
 if(mode==="female") femaleTotal++
 else maleTotal++
 
-}
-
 save()
 updateAll()
+
+}
+
+function removeLocker(num){
+
+if(state[num]){
+delete state[num]
+save()
+updateAll()
+}
 
 }
 
@@ -346,6 +378,27 @@ document.getElementById("maleNow").innerText=maleNow
 
 document.getElementById("femaleTotal").innerText=femaleTotal
 document.getElementById("maleTotal").innerText=maleTotal
+
+updateStatus(femaleNow,maleNow)
+
+}
+
+function updateStatus(fNow,mNow){
+
+let total=mode==="female"?36:32
+let used=mode==="female"?fNow:mNow
+let remain=total-used
+
+let text=""
+
+if(remain===0){
+text="FULL !!"
+}
+else if(remain<=5){
+text="残り "+remain
+}
+
+document.getElementById("statusBar").innerText=text
 
 }
 
