@@ -127,6 +127,17 @@ font-size:15px;
 
 男性現在利用者<br>
 <span id="maleNow">0</span> / 32
+<br><br>
+
+貸切風呂利用者<br>
+<div class="adjust">
+<button onclick="adjustPrivate(-1)">－</button>
+<span id="privateNow">0</span>
+<button onclick="adjustPrivate(1)">＋</button>
+</div>
+
+総利用者数<br>
+<span id="totalNow">0</span>
 
 <br><br>
 
@@ -182,11 +193,13 @@ let state=JSON.parse(localStorage.getItem("lockerState")||"{}")
 
 let femaleTotal=parseInt(localStorage.getItem("femaleTotal")||0)
 let maleTotal=parseInt(localStorage.getItem("maleTotal")||0)
+let privateNow=parseInt(localStorage.getItem("privateNow")||0)
 
 function save(){
 localStorage.setItem("lockerState",JSON.stringify(state))
 localStorage.setItem("femaleTotal",femaleTotal)
 localStorage.setItem("maleTotal",maleTotal)
+localStorage.setItem("privateNow",privateNow)
 }
 
 function switchMode(m){
@@ -259,25 +272,7 @@ time.className="time"
 div.appendChild(label)
 div.appendChild(time)
 
-let pressTimer
-
-div.addEventListener("touchstart",function(){
-
-pressTimer=setTimeout(()=>{
-removeLocker(num)
-},800)
-
-})
-
-div.addEventListener("touchend",function(){
-
-clearTimeout(pressTimer)
-
-if(!state[num]){
-toggle(num)
-}
-
-})
+div.onclick=()=>toggle(num)
 
 return div
 
@@ -285,23 +280,17 @@ return div
 
 function toggle(num){
 
+if(state[num]){
+delete state[num]
+}else{
 state[num]=Date.now()
 
 if(mode==="female") femaleTotal++
 else maleTotal++
+}
 
 save()
 updateAll()
-
-}
-
-function removeLocker(num){
-
-if(state[num]){
-delete state[num]
-save()
-updateAll()
-}
 
 }
 
@@ -318,6 +307,15 @@ updateAll()
 
 }
 
+function adjustPrivate(val){
+
+privateNow=Math.max(0,privateNow+val)
+
+save()
+updateAll()
+
+}
+
 function resetAll(){
 
 if(confirm("本日のデータをリセットしますか？")){
@@ -325,6 +323,7 @@ if(confirm("本日のデータをリセットしますか？")){
 state={}
 femaleTotal=0
 maleTotal=0
+privateNow=0
 
 localStorage.clear()
 
@@ -378,6 +377,12 @@ document.getElementById("maleNow").innerText=maleNow
 
 document.getElementById("femaleTotal").innerText=femaleTotal
 document.getElementById("maleTotal").innerText=maleTotal
+
+document.getElementById("privateNow").innerText=privateNow
+
+let totalNow=femaleNow+maleNow+privateNow
+
+document.getElementById("totalNow").innerText=totalNow
 
 updateStatus(femaleNow,maleNow)
 
