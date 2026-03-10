@@ -17,28 +17,38 @@ text-align:center;
 header{
 background:#333;
 color:white;
-padding:12px;
-font-size:20px;
+padding:14px;
+font-size:22px;
 }
 
 .counter{
-font-size:16px;
-padding:10px;
+font-size:18px;
+padding:12px;
 background:white;
+}
+
+.adjust{
+margin-left:8px;
+}
+
+.adjust button{
+font-size:16px;
+padding:4px 10px;
+margin:0 2px;
 }
 
 .switch{
 display:flex;
 justify-content:center;
-gap:10px;
-padding:10px;
+gap:12px;
+padding:12px;
 }
 
 .switch button{
-font-size:18px;
-padding:12px 20px;
+font-size:20px;
+padding:14px 26px;
 border:none;
-border-radius:8px;
+border-radius:10px;
 }
 
 .active{
@@ -56,17 +66,17 @@ justify-content:center;
 }
 
 .locker{
-width:72px;
-height:72px;
-margin:4px;
-border-radius:10px;
+width:90px;
+height:90px;
+margin:6px;
+border-radius:12px;
 border:2px solid #333;
 background:white;
 display:flex;
 flex-direction:column;
 align-items:center;
 justify-content:center;
-font-size:18px;
+font-size:20px;
 }
 
 .used{
@@ -78,7 +88,8 @@ border:4px solid orange;
 }
 
 .time{
-font-size:11px;
+font-size:16px;
+margin-top:4px;
 }
 
 </style>
@@ -89,18 +100,23 @@ font-size:11px;
 <header>温泉ロッカー管理</header>
 
 <div class="counter">
-女性利用人数 <span id="femaleCount">0</span> / 36　
-男性利用人数 <span id="maleCount">0</span> / 32
-<br>
-本日の来客数　
-女性 <span id="femaleVisitors">0</span>　
-男性 <span id="maleVisitors">0</span>
-</div>
-  
-<div style="margin:10px;">
-<button id="resetBtn" style="font-size:16px;padding:10px 20px;border:none;border-radius:8px;background:#444;color:white;">
-閉店リセット
-</button>
+
+女性利用人数 
+<span id="femaleCount">0</span> / 36
+<span class="adjust">
+<button onclick="adjust('female',1)">＋</button>
+<button onclick="adjust('female',-1)">－</button>
+</span>
+
+　
+
+男性利用人数 
+<span id="maleCount">0</span> / 32
+<span class="adjust">
+<button onclick="adjust('male',1)">＋</button>
+<button onclick="adjust('male',-1)">－</button>
+</span>
+
 </div>
 
 <div class="switch">
@@ -145,11 +161,14 @@ bottom:[71,72,73,74,75,76]
 let mode="female"
 
 let state=JSON.parse(localStorage.getItem("lockerState")||"{}")
-let femaleVisitors = Number(localStorage.getItem("femaleVisitors") || 0)
-let maleVisitors = Number(localStorage.getItem("maleVisitors") || 0)
+
+let femaleVisitors=parseInt(localStorage.getItem("femaleVisitors")||0)
+let maleVisitors=parseInt(localStorage.getItem("maleVisitors")||0)
 
 function save(){
 localStorage.setItem("lockerState",JSON.stringify(state))
+localStorage.setItem("femaleVisitors",femaleVisitors)
+localStorage.setItem("maleVisitors",maleVisitors)
 }
 
 function switchMode(m){
@@ -238,18 +257,26 @@ delete state[num]
 
 state[num]=Date.now()
 
-if(mode==="female"){
-femaleVisitors++
-localStorage.setItem("femaleVisitors",femaleVisitors)
-}else{
-maleVisitors++
-localStorage.setItem("maleVisitors",maleVisitors)
-}
+if(mode==="female") femaleVisitors++
+else maleVisitors++
 
 }
 
 save()
 updateAll()
+
+}
+
+function adjust(gender,val){
+
+if(gender==="female"){
+femaleVisitors=Math.max(0,femaleVisitors+val)
+}else{
+maleVisitors=Math.max(0,maleVisitors+val)
+}
+
+save()
+updateCounters()
 
 }
 
@@ -272,9 +299,12 @@ let minutes=Math.floor((Date.now()-state[num])/60000)
 
 timeDiv.innerText=minutes+"分"
 
+updateColor(el,minutes)
+
 }else{
 
 timeDiv.innerText=""
+el.style.background="white"
 
 }
 
@@ -282,6 +312,17 @@ timeDiv.innerText=""
 
 updateNear()
 updateCounters()
+
+}
+
+function updateColor(el,min){
+
+if(min>=150) el.style.background="#b388ff"
+else if(min>=120) el.style.background="#82b1ff"
+else if(min>=90) el.style.background="#69f0ae"
+else if(min>=60) el.style.background="#ffff8d"
+else if(min>=30) el.style.background="#ffab40"
+else el.style.background="#ff8a8a"
 
 }
 
@@ -320,32 +361,8 @@ document.getElementById("locker"+right)?.classList.add("near")
 
 function updateCounters(){
 
-let femaleNumbers=[]
-let maleNumbers=[]
-
-layout.female.forEach(b=>{
-femaleNumbers=femaleNumbers.concat(b.top,b.bottom)
-})
-
-layout.male.forEach(b=>{
-maleNumbers=maleNumbers.concat(b.top,b.bottom)
-})
-
-let femaleUsed=0
-let maleUsed=0
-
-femaleNumbers.forEach(n=>{
-if(state[n]) femaleUsed++
-})
-
-maleNumbers.forEach(n=>{
-if(state[n]) maleUsed++
-})
-
-document.getElementById("femaleCount").innerText=femaleUsed
-document.getElementById("maleCount").innerText=maleUsed
-document.getElementById("femaleVisitors").innerText=femaleVisitors
-document.getElementById("maleVisitors").innerText=maleVisitors
+document.getElementById("femaleCount").innerText=femaleVisitors
+document.getElementById("maleCount").innerText=maleVisitors
 
 }
 
@@ -357,27 +374,7 @@ setTimeout(loop,30000)
 switchMode("female")
 loop()
 
-document.getElementById("resetBtn").onclick=function(){
-
-if(confirm("本日のデータをすべてリセットしますか？")){
-
-state={}
-femaleVisitors=0
-maleVisitors=0
-
-localStorage.removeItem("lockerState")
-localStorage.setItem("femaleVisitors",0)
-localStorage.setItem("maleVisitors",0)
-
-draw()
-
-}
-
-}
-
 </script>
 
 </body>
 </html>
-
-
