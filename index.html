@@ -23,15 +23,27 @@ font-size:22px;
 
 .counter{
 font-size:18px;
-padding:10px;
+padding:12px;
 background:white;
-line-height:1.6;
+line-height:1.7;
 }
 
 .adjust button{
 font-size:18px;
-padding:6px 14px;
+padding:6px 16px;
 margin:4px;
+}
+
+.reset{
+margin-top:10px;
+}
+
+.reset button{
+font-size:18px;
+padding:10px 24px;
+background:#444;
+color:white;
+border:none;
 }
 
 .switch{
@@ -43,7 +55,7 @@ padding:12px;
 
 .switch button{
 font-size:20px;
-padding:14px 28px;
+padding:14px 30px;
 border:none;
 }
 
@@ -72,7 +84,10 @@ flex-direction:column;
 align-items:center;
 justify-content:center;
 font-size:20px;
-border-radius:0;
+}
+
+.male .locker{
+height:86px;
 }
 
 .used{
@@ -96,20 +111,31 @@ font-size:15px;
 
 <div class="counter">
 
+女性現在利用者<br>
+<span id="femaleNow">0</span> / 36
+<br><br>
+
+男性現在利用者<br>
+<span id="maleNow">0</span> / 32
+
+<br><br>
+
 女性累計来客数<br>
-<span id="femaleCount">0</span> 人 / 36<br>
 <div class="adjust">
-<button onclick="adjust('female',1)">＋</button>
 <button onclick="adjust('female',-1)">－</button>
+<span id="femaleTotal">0</span>
+<button onclick="adjust('female',1)">＋</button>
 </div>
 
-<br>
-
 男性累計来客数<br>
-<span id="maleCount">0</span> 人 / 32<br>
 <div class="adjust">
-<button onclick="adjust('male',1)">＋</button>
 <button onclick="adjust('male',-1)">－</button>
+<span id="maleTotal">0</span>
+<button onclick="adjust('male',1)">＋</button>
+</div>
+
+<div class="reset">
+<button onclick="resetAll()">閉店リセット</button>
 </div>
 
 </div>
@@ -124,46 +150,33 @@ font-size:15px;
 <script>
 
 const layout={
-
 female:[
-{
-top:[20,19,18,17,16,15,14,13,12,11],
-bottom:[10,9,8,7,6,5,4,3,2,1]
-},
-{
-top:[36,35,34,33,32,31,30,29],
-bottom:[28,27,26,25,24,23,22,21]
-}
+{top:[20,19,18,17,16,15,14,13,12,11],
+bottom:[10,9,8,7,6,5,4,3,2,1]},
+{top:[36,35,34,33,32,31,30,29],
+bottom:[28,27,26,25,24,23,22,21]}
 ],
-
 male:[
-{
-top:[61,62,63,64,65,66],
-bottom:[51,52,53,54,55,56]
-},
-{
-top:[67,68,69,70],
-bottom:[57,58,59,60]
-},
-{
-top:[77,78,79,80,81,82],
-bottom:[71,72,73,74,75,76]
-}
+{top:[61,62,63,64,65,66],
+bottom:[51,52,53,54,55,56]},
+{top:[67,68,69,70],
+bottom:[57,58,59,60]},
+{top:[77,78,79,80,81,82],
+bottom:[71,72,73,74,75,76]}
 ]
-
 }
 
 let mode="female"
 
 let state=JSON.parse(localStorage.getItem("lockerState")||"{}")
 
-let femaleVisitors=parseInt(localStorage.getItem("femaleVisitors")||0)
-let maleVisitors=parseInt(localStorage.getItem("maleVisitors")||0)
+let femaleTotal=parseInt(localStorage.getItem("femaleTotal")||0)
+let maleTotal=parseInt(localStorage.getItem("maleTotal")||0)
 
 function save(){
 localStorage.setItem("lockerState",JSON.stringify(state))
-localStorage.setItem("femaleVisitors",femaleVisitors)
-localStorage.setItem("maleVisitors",maleVisitors)
+localStorage.setItem("femaleTotal",femaleTotal)
+localStorage.setItem("maleTotal",maleTotal)
 }
 
 function switchMode(m){
@@ -194,7 +207,7 @@ app.innerHTML=""
 layout[mode].forEach(block=>{
 
 const blockDiv=document.createElement("div")
-blockDiv.className="block"
+blockDiv.className="block "+mode
 
 const top=document.createElement("div")
 top.className="row"
@@ -245,15 +258,13 @@ return div
 function toggle(num){
 
 if(state[num]){
-
 delete state[num]
-
 }else{
 
 state[num]=Date.now()
 
-if(mode==="female") femaleVisitors++
-else maleVisitors++
+if(mode==="female") femaleTotal++
+else maleTotal++
 
 }
 
@@ -262,20 +273,40 @@ updateAll()
 
 }
 
-function adjust(gender,val){
+function adjust(g,val){
 
-if(gender==="female"){
-femaleVisitors=Math.max(0,femaleVisitors+val)
+if(g==="female"){
+femaleTotal=Math.max(0,femaleTotal+val)
 }else{
-maleVisitors=Math.max(0,maleVisitors+val)
+maleTotal=Math.max(0,maleTotal+val)
 }
 
 save()
-updateCounters()
+updateAll()
+
+}
+
+function resetAll(){
+
+if(confirm("本日のデータをリセットしますか？")){
+
+state={}
+femaleTotal=0
+maleTotal=0
+
+localStorage.clear()
+
+updateAll()
+draw()
+
+}
 
 }
 
 function updateAll(){
+
+let femaleNow=0
+let maleNow=0
 
 document.querySelectorAll(".locker").forEach(el=>{
 
@@ -294,6 +325,9 @@ let minutes=Math.floor((Date.now()-state[num])/60000)
 
 timeDiv.innerText=minutes+"分"
 
+if(num<=36) femaleNow++
+else maleNow++
+
 updateColor(el,minutes)
 
 }else{
@@ -306,7 +340,12 @@ el.style.background="white"
 })
 
 updateNear()
-updateCounters()
+
+document.getElementById("femaleNow").innerText=femaleNow
+document.getElementById("maleNow").innerText=maleNow
+
+document.getElementById("femaleTotal").innerText=femaleTotal
+document.getElementById("maleTotal").innerText=maleTotal
 
 }
 
@@ -351,13 +390,6 @@ document.getElementById("locker"+right)?.classList.add("near")
 })
 
 })
-
-}
-
-function updateCounters(){
-
-document.getElementById("femaleCount").innerText=femaleVisitors
-document.getElementById("maleCount").innerText=maleVisitors
 
 }
 
